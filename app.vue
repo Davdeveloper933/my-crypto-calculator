@@ -54,7 +54,7 @@ const prices:any = ref({});
 
 // Функция для получения данных с API
 const fetchPrices = async () => {
-  if (!cryptoCurrencyValue.value?.name || !fiatCurrency.value?.name) {
+  if (!cryptoCurrencyValue.value || !fiatCurrency.value) {
     console.error('cryptoCurrencyValue or fiatCurrency is not set correctly.');
     return;
   }
@@ -154,9 +154,12 @@ const loadConversionHistory = ()=>{
 // Наблюдаем за изменением валют
 watch(
   [cryptoCurrencyValue, fiatCurrency],
-  ([crypto, fiat]) => {
+  async ([crypto, fiat]) => {
     if (crypto?.name && fiat?.name) {
-      fetchPrices();
+      await fetchPrices();
+      await nextTick(); // Ждём, пока данные обновятся
+      changeInputValue();
+      changeResultValue();
     }
   },
   { immediate: true }
