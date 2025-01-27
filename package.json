@@ -12,17 +12,18 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
-    "vue": "latest",
-    "vue-router": "latest",
     "@nuxtjs/tailwindcss": "latest",
     "@tailwindcss/typography": "latest",
-    "nuxt": "latest"
+    "nuxt": "latest",
+    "ofetch": "^1.4.1",
+    "vue": "latest",
+    "vue-router": "latest"
   },
   "devDependencies": {
+    "@nuxt/examples-ui": "latest",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-vue": "^9.32.0",
-    "@nuxt/examples-ui": "latest",
     "prettier": "^3.4.2"
   }
 }

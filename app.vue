@@ -23,7 +23,11 @@
 <script setup lang="ts">
 
 import { ref, onMounted,watch } from "vue";
-type ApiResponse = Record<string, Record<string, number>>;
+type ApiResponse = {
+  [crypto: string]: {
+    [fiat: string]: number;
+  };
+};
 
 interface Data {
   sum:number,fiat:string,cryptoCurrency:string,result:number
@@ -50,24 +54,43 @@ const prices:any = ref({});
 
 // Функция для получения данных с API
 const fetchPrices = async () => {
-    if (!cryptoCurrencyValue.value || !fiatCurrency.value) return;
-    const { data, error } = await useFetch<ApiResponse>(() =>
-      `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoCurrencyValue.value.name}&vs_currencies=${fiatCurrency.value.name}`
-    );
-  if (error.value) {
-    console.error('Error fetching cryptocurrency prices:', error.value);
+  if (!cryptoCurrencyValue.value?.name || !fiatCurrency.value?.name) {
+    console.error('cryptoCurrencyValue or fiatCurrency is not set correctly.');
     return;
   }
-  prices.value = data.value;
-  console.log(data.value); // Вывод данных в консоль
 
-  // Извлечение цены из данных API
-  const price = data.value?.[cryptoCurrencyValue.value.name]?.[fiatCurrency.value.name];
-  if (price) {
-    cryptoCurrencyPrice.value = price;
-    result.value = cryptoCurrencyPrice.value; // Обновляем цену
+  const crypto = cryptoCurrencyValue.value.name;
+  const fiat = fiatCurrency.value.name;
+
+  try {
+    // Выполняем запрос
+    const data = await $fetch<ApiResponse>(`/api/prices`, {
+      params: { crypto, fiat },
+    });
+
+    console.log('Response data:', data);
+
+    // Проверяем наличие данных
+    if (data?.[crypto]?.[fiat] === undefined) {
+      console.error('Price not found in API response:', data);
+      return;
+    }
+
+    prices.value = data;
+
+    const price = data[crypto][fiat];
+    console.log('Extracted price:', price);
+
+    if (price) {
+      cryptoCurrencyPrice.value = price;
+      result.value = cryptoCurrencyPrice.value; // Обновляем цену
+    }
+  } catch (err) {
+    console.error('Failed to fetch prices:', err);
   }
 };
+
+
 // 1-ый инпут умножается на cryptoCurrencyPrice при наблюдении за первым инпутом
 // 1-ый инпут делится на 2-ой инпут при наблюдении за вторым инпутом
 
@@ -129,15 +152,21 @@ const loadConversionHistory = ()=>{
 }
 
 // Наблюдаем за изменением валют
-watch([cryptoCurrencyValue, fiatCurrency], ()=> fetchPrices());
+watch(
+  [cryptoCurrencyValue, fiatCurrency],
+  ([crypto, fiat]) => {
+    if (crypto?.name && fiat?.name) {
+      fetchPrices();
+    }
+  },
+  { immediate: true }
+);
 // Автоматическое выполнение при изменении resultVal
 watch([result,inputValue,cryptoCurrencyValue,fiatCurrency], () => {
   conversionData.value.fiat = fiatCurrency.value.label;
   conversionData.value.cryptoCurrency = cryptoCurrencyValue.value.label;
 });
 
-watch([result,inputValue], () => {
-});
 
 onMounted(()=>{
   loadConversionHistory()
